@@ -1,0 +1,27 @@
+Dictionary
+========================================================
+
+* Normal Distribution
+
+A normal distribution is the cornerstone of most statistical methods. It is also sometimes known as a bell curve.
+
+```{r nd, fig.height=8, fig.width=6, echo=FALSE}
+hist(rnorm(500, mean=0, sd=1),
+     main = "A Normal Distribution")
+```
+
+
+* Independence
+* Linearity
+* Homoskedactity
+
+```{r}
+summary(cars)
+```
+
+You can also embed plots, for example:
+
+```{r fig.width=7, fig.height=6}
+plot(cars)
+```
+

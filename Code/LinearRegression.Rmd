@@ -1,0 +1,61 @@
+Linear Regression Models
+========================================================
+
+Linear Regession is great, the statistical workhorse of social science, and good deal of other sciences as well. If you ever took an introductory statistics course in college you prbably ended the class with this type of model.
+
+Regression is a model that helps us to understand how much different variables (like the amount of sunshine and temperature) move together. I would expect that if there is more sunlight shining through my window, the warmer it will be inside my house. Regression allows us to look at how much warmer it will be if we get an hour more sunlight. We can also extend the method to figure out how the amount of warmth changes based on the time of year (so if we get the same total amount of sunshine in March as we do in September how much does the season effect how hot it is).
+
+Some practical examples would be if you wanted to see how much end of bonuses increased productivity (manager), or how much more chicken needs to be cooked to feed 5 more 10 year olds coming for a birthday party (parent), or how much the demand for copper increases the price of copper (analyst).
+
+The basic way it works is to imagine that you have two variables that you think are related. Make a scatterplot of the two variables and then try to draw a straight line in such a way that it gets as close as possible to most of the points.
+
+In the figure below I'll do this with three data points. With these three points of data we can see that we have a line, but the line isn't really that close to the data. Lets try again with 500 data points.
+
+
+```{r lm.1, fig.height=6, fig.width=6, echo=FALSE}
+set.seed(2340)
+var1 <- rnorm(500, 50, 2.5)
+var2 <- rnorm(500, 2, 5)
+var3 <- rnorm(500, 3, 3)
+data1 <- data.frame(d1, d2, d3)
+
+plot(data1[1:3,1:2], main="Scatterplot of Data with 3 data points", ylab="Variable 1", xlab="Variable 2")
+abline(lm(d2~d1, data1[1:3,]), col="red")
+
+plot(data1[,1:2], main="Scatterplot of Data with 500 data points", ylab="Variable 1", xlab="Variable 2")
+abline(lm(d2~d1, data1), col="red")
+```
+
+With more data it is a bit easier to see that the line goes through the middle of the cloud of data points. In reality it is getting as close as possible to everydata point while staying perfectly straight. 
+
+
+Assumptions
+------------
+There are a number of assumptions in linear regression, the nice thing is that they are very weak assumptions. So If you break the assumptions you will probably still get decent results. Here is the list of assumptions:
+* Normal Distribution
+* Independence
+* Linearity
+* Homoskedactity
+
+Let's look at each of these assumptions.
+
+Normal Distribution. In a regression it is assumed that the errors of the model are normaly distributed.
+
+Independence. The value of any one data point
+
+Code
+----------
+
+In R the way to perform linear regression is with the command `lm()`, for linear model. I'm going to use the same dataset that I used to make the scatterplots above which I called `data1` and it has variables named var1, var2, and var3.
+```{r, echo=TRUE}
+
+lm(var1 ~ var2, data=data1)
+
+```
+
+
+Going Deeper
+--------------
+
+
+[1] I'm totally making this data up. You can see the code on github.

@@ -1,0 +1,250 @@
+Dynamical Systems Tutorial 
+========================================================
+
+One Dimensional Analysis
+---------------
+
+This tutorial will try and show one way of doing dynamical systems analysis. To show how it can be done we'll walk through finding set points for a few different variables, and how some of these variables interact with each other. The code below is all in r, but most of what will be shown is doable in any statistical program (like SPSS, Stata or SAS).
+
+```{r setwd, echo=FALSE}
+mac <- "/Users/johnstevens/Dropbox/school/SYNC"
+pc <- "C:/Dropbox/school/SYNC"
+setwd(mac)
+options(digits=2) 
+```
+
+# Prepping the Data
+
+The first thing that needs to be done is get the data in the correct format, which means creating a lagged version of the variable we are interested in. The data below is contains information on testosterone (T) and estrogen (E) levels for individuals (ID) over a 13 day period (SPITDAY). Other information available includes sex drive (drive).
+
+First read in the data and look at the first few lines:
+```{r readdata, echo=TRUE,message=FALSE, warning=FALSE}
+#Read in csv text data
+d01 <- read.csv("tutorial.csv")
+
+# View first few records
+head(d01, 3)
+```
+
+The point of dynamical systems models is to look at change over time so the data needs to be manipulated a bit. First we need to create lagged variables. Lagged means data from the previous time, so the sex hormone and sex drive at time 1 (drive<sub> t0 </sub>) and the sex hormone and drive from the previous time (drive<sub> t-1 </sub>) which will help us understand the change in sex hormones and drive from day to day. The general idea is that sex drive at time 1 (drive<sub> t0 </sub>) should predict, or have a relationship to, the sex drive at time 2 (drive<sub> t1 </sub>). By creating lagged variables we will be able to see what that relationship.
+
+```{r modifydata, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+# Use a library of code with more fuctions: in this case 'slide' to create the lagged variable
+library(DataCombine)
+
+#Order the data by person ID and Day
+attach(d01)
+d01 <- d01[order(ID, SPITDAY),]
+
+#Create lagged variable for each course
+d02 <- slide(d01, Var="T", GroupVar="ID", NewVar = "LagT") # For Testosterone
+d02 <- slide(d02, Var="E", GroupVar="ID", NewVar = "LagE") # For Estrogen
+d02 <- slide(d02, Var="drive", GroupVar="ID", NewVar = "LagD") # For Drive
+
+# Get rid of records at t0 since they have null lagged values
+d02 <- na.omit(d02)
+```
+
+
+
+
+# Exploratory Analysis
+
+Now we have a small data set (`d02`) with a lagged variables. Now we can plot the sex hormone by the lagged data. If a scatter plot is created with the testosterone plotted on the x-axis and lagged testosterone on the y-axis we get a graph that looks like this.
+
+
+```{r sp01, echo=TRUE,message=FALSE, warning=FALSE, fig.width=7, fig.height=6}
+# Add functionality for modifiable and pretty plots (graphs)
+library(ggplot2)
+
+# Create graph
+
+  # Locate the data, and determine the variables to put on a scatter plot
+sp01 <- ggplot(d02, aes(T, LagT))
+
+  # Add the type of graph (scatter plot == geom_point) and title
+p1 <- sp01 + geom_point() + labs(title="Testosterone Levels by Testosterone 1 day later")
+
+  # Display scatterplot
+p1
+```
+
+If there is no change day by day the data points should line up on a perfect 45 degree line. We can add that 45 degree line and add a smoother line (a curved line that follows the data points) to see where the set points are. 
+
+```{r sp01.2, echo=TRUE,message=FALSE, warning=FALSE, fig.width=7, fig.height=6}
+ # Take exisiting scatter plot and add a 45 degrees line (geom_abline) and a curved line representing a locally weighted average (stat_smooth)
+p1 + geom_abline(intercept=0, slope=1) + stat_smooth()
+```
+
+Another way to look at this is to create a difference score, which will rotate the graph so no change is a horizontal line.
+
+```{r sp02, echo=TRUE,message=FALSE, warning=FALSE, fig.width=7, fig.height=6}
+# Create a new variable by subtracting t-1 from t
+d02$DiffScoreT <- (d02$T - d02$LagT)
+
+# Set up data for graph
+sp02 <- ggplot(d02, aes(T, DiffScoreT))
+
+# Graph data as scatter plot and add labels and lines
+sp02 + geom_point() + labs(title="Testosterone by Daily Difference", x="Testosterone", y="Change in Testosterone") + geom_abline(intercept=0, slope=0) + stat_smooth()
+
+```
+
+If the smoothed slope (the blue line) crosses the horizontal line it indicates that this is were there is no change from one day to the next, a set point. Set points come in two flavors when looking at a single variable like this, they are either "attractors" or "repellors". 
+
+Attractors are stable points, and it is expected that values will converge to these set points over time. In other words the attractors are attractive and pull values close to them. Repellors are the opposite, they push things away, repelling values away over time.
+
+Telling which set points are attractors and which are repellors is pretty easy, attractors have a negative slope, and repellors have a positive slope. Looking at the difference plot above there seems to be  a repulsive set point (repellor) at the 24. an attractor looks like it exists at a testosterone score of 45.
+
+```{r sp03, echo=TRUE,message=FALSE, warning=FALSE, fig.width=7, fig.height=6}
+# Create new variables by subtracting t-1 from t  for sex drive (D) and estrogen (E)
+d02$DiffScoreE <- (d02$E - d02$LagE)
+d02$DiffScoreD <- (d02$drive - d02$LagD)
+
+# Set up data for estrogen graph
+sp03 <- ggplot(d02, aes(E, DiffScoreE))
+
+# Graph data as scatter plot and add labels and lines
+sp03 + geom_point() + labs(title="Estrogen by Daily Difference", x="Estrogen", y="Change in Estrogen") + geom_abline(intercept=0, slope=0) + stat_smooth()
+
+# Set up data for sex drive graph
+sp04 <- ggplot(d02, aes(drive, DiffScoreD))
+
+# Graph data as scatter plot and add labels and lines
+sp04 + geom_point() + labs(title="Sex Drive by Daily Difference", x="Sex Drive", y="Change in Drive") + geom_abline(intercept=0, slope=0) + stat_smooth()
+
+
+```
+
+In the two graphs above it is easy to find a repellor in the estrogen graph, however the graph of sex drive doesn't seem to have any point where it crosses the 0 line. This is interesting and we will try to explain it in a minute.
+
+The slope of the line not only tells us if a set point is an attractor or repellor, but it also can tell us how strong the attraction/repulsion is. The next step is to figure out exactly where these set points are and how strong they are.
+
+# Regression Analysis
+
+We can use basic polynomial regression to figure out exactly where the set points are and how strong they are. In a regression analysis we could say that the day to day difference in sex hormones is equal to an intercept (b0) plus the sex hormone raised to a power of three (X^3) plus a error term (e), or $$\Delta x = \beta_0 + \beta_1x^3 + e $$. The reason we raise the variable to a power of 3 is because a cubic polynomial allows for a function that curves both up and down
+
+In regression if there is a polynomial (X^3) all lower order terms must also be included (X^2 , X). So our equation turns into $$\Delta x = \beta_0 + \beta_1x + \beta_2x^2 + \beta_3x^3 + e $$. In order to more accurately estimate the change in Estrogen we are going to create a new variable that approximates the rate of change, or velocity of change through time.
+
+The code to do this in `R` is below, setting the velocity of estrogen as the dependent variable which is being predicted by estrogen itself.
+
+```{r reg01, echo=TRUE,message=FALSE, warning=FALSE}
+# Created Lead Variables (the opposite of a lag) and use the lead and lag variables to generate velocity
+d02 <- slide(d02, Var="E", GroupVar="ID", NewVar = "LeadE", slideBy= 1) # Create Lead
+d02$velocityE <- (d02$LeadE - d02$LagE) / 2
+
+#Linear regression model with a cubic polynomial for estrogen (E) with velocity as the dependent variable
+lm01 <- lm(velocityE ~ poly(E,3), data=d02) 
+
+#Display results of the model
+summary(lm01)
+
+# Find Set points
+m <- polyroot(lm01$coefficients)
+
+#show the set points as complex numbers
+m
+```
+
+The output above gives us the beta coefficients for estrogen, estrogen^2 and estrogen^3. The intercept gives the average change in estrogen. If we take the coefficients and set the change score to 0 (0=`r summary(lm01)$coefficients[1]` + `r summary(lm01)$coefficients[2]` * x + `r summary(lm01)$coefficients[3]` * x^2 `r summary(lm01)$coefficients[4]` * x^3) we can solve for x (estrogen) and get the set points (`m`) ^[1]. 
+
+The resulting values (set points) for x are `r round(Re(m), 4)`. These are the exact locations where there is no change over time. If you look at these set points in the code above you'll notice there are actually two numbers added together, the latter of which is multiplied by `i`. The `i` is an imaginary number and if there is a number multiplied by `i` that means you have something going on that is more complicated than a nice stable attractor or repellor.
+
+Now that we have the set points we need to check how strong they are. The strength of an attractor or repellor is called the Lyapunov exponent (or characteristic root). To find the Lyapunov exponent is to get the derivative just off of the set points. The code below will do this for us
+
+```{r lyapunov,echo=TRUE,message=FALSE, warning=FALSE}
+#Find the mean of Estrogen
+Ehat <- mean(d02$E)
+
+#Calculate Derivative function and get slopes at setpoints / derivative function is li+2quad*x+3cub*x^2
+
+lyap1<- Ehat + 2*Ehat*Re(m[1]) + 3*Ehat*Re(m[1])^2
+lyap2<- Ehat + 2*Ehat*Re(m[2]) + 3*Ehat*Re(m[2])^2
+lyap3<- Ehat + 2*Ehat*Re(m[3]) + 3*Ehat*Re(m[3])^2
+```
+
+So the Lyapunov exponents are `r lyap1`, `r lyap2` , and `r lyap3`. The third set point (`r round(Re(m[3]), 4)`) has the strongest effect. 
+
+One of the fun graph that can be used to show all of this fun information is a vector flow field graph. For estrogen the vector flow is shown below
+
+```{r statespace, echo=TRUE,message=FALSE, warning=FALSE, fig.width=7, fig.height=6}
+#Load library for graphing the vector field
+library(pracma)
+
+# Create a function using the regression model
+f <- function(x,y) lm01$coefficients[1] + (lm01$coefficients[2]*x) +
+  (lm01$coefficients[3]*x^2) + (lm01$coefficients[4] * x^3)
+
+# Find dimensions of the graph by finding the largest and smallest set point, and add 1
+xx <- c(min(Re(m))-1, max(Re(m))+1)
+yy <- c(min(Re(m))-1, max(Re(m))+1)
+
+# Create the vector field plot
+vectorfield(f, xx, yy, scale = 0.1, col="steelblue")
+
+# Make a title
+title("Vector Flow Field for Estrogen")
+```
+
+
+If we do the same thing for testosterone  and sex drive we get:
+
+```{r reg02, echo=TRUE,message=FALSE, warning=FALSE}
+d02 <- slide(d02, Var="drive", GroupVar="ID", NewVar = "LeadD", slideBy= 1) # Create Lead
+
+d02 <- slide(d02, Var="T", GroupVar="ID", NewVar = "LeadT", slideBy= 1) # Create Lead
+
+d02$velocityD <- (d02$LeadD - d02$LagD) / 2
+d02$velocityT <- (d02$LeadT - d02$LagT) / 2
+
+#Linear regression model with a cubic polynomial
+lm02 <- lm(velocityT ~ poly(T,3), data=d02)
+lm03 <- lm(velocityD ~ poly(drive,3), data=d02)
+
+
+#Display results of the model
+summary(lm02)
+summary(lm03)
+
+#Get set points
+m2 <- polyroot(lm02$coefficients)
+m3 <- polyroot(lm03$coefficients)
+
+m2
+m3
+
+f2 <- function(x,y) lm02$coefficients[1] + (lm02$coefficients[2]*x) +
+  (lm02$coefficients[3]*x^2) + (lm02$coefficients[4] * x^3)
+
+xx <- c(min(Re(m2)), max(Re(m2)))
+yy <- c(-190, 190)
+vectorfield(f2, xx, yy, scale = .2, col="steelblue")
+title("Vector Flow Field for Testosterone")
+
+
+f3 <- function(x,y) lm03$coefficients[1] + (lm03$coefficients[2]*x) +
+  (lm03$coefficients[3]*x^2) + (lm03$coefficients[4] * x^3)
+
+xx <- c(min(Re(m3))-1, max(Re(m3))+1)
+yy <- c(min(Re(m3))-1, max(Re(m3))+1)
+vectorfield(f3, xx, yy, scale = 0.1, col="steelblue")
+title("Vector Flow Field for Sex Drive")
+```
+
+
+which gives us the set points of `r  round(Re(m2), 4)`. For sex drive the set points get complex ^[2][3]. There is one real answer `r round(Re(m3[2]), 4)` and two complex solutions  `r  round(m3[c(1,3)], 4)`.
+
+The complex set points of sex drive indicates that there may be a spiral or periodic attractor/repellor. Spirals are another type of topological feature (along with attractors/repellors) but they only exist by increasing the dimensions of the analysis. 
+
+Hopefully we'll post a two dimesional tutorial soon.
+
+
+### Notes
+
+----------
+
+[1]: R provides a nice function to find set points. If you are using another program (without this happy function) you can take the equation and plug it into wolfram alpha http://www.wolframalpha.com
+
+[2]: literally, ha ha. 
+
+[3]: Boy I'm glad no one reads footnotes.

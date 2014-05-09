@@ -1,0 +1,16 @@
+{
+    "contents" : "Dictionary\n========================================================\n\n* Normal Distribution\n\nA normal distribution is the cornerstone of most statistical methods. It is also sometimes known as a bell curve.\n\n```{r nd, fig.height=8, fig.width=6, echo=FALSE}\nhist(rnorm(500, mean=0, sd=1),\n     main = \"A Normal Distribution\")\n```\n\n\n* Independence\n* Linearity\n* Homoskedactity\n\n```{r}\nsummary(cars)\n```\n\nYou can also embed plots, for example:\n\n```{r fig.width=7, fig.height=6}\nplot(cars)\n```\n\n",
+    "created" : 1397243522397.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2598000117",
+    "id" : "9C3D0092",
+    "lastKnownWriteTime" : 1387166696,
+    "path" : "C:/Dropbox/school/Working Papers/COYDA/Code/Dictionary.Rmd",
+    "project_path" : "Dictionary.Rmd",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_markdown"
+}

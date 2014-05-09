@@ -1,0 +1,16 @@
+{
+    "contents" : "## Testing Ground\n\nlibrary(pracma)\nlibrary(ggplot2)\n\n\n#need a 2 column dataframe with all x values and all corresponding y values. Then apply the linear regression models to both x and y values and then use the basic code found in the ggplot geom_segment documentation\n# for each x (create sequence of x values) create seq of y values\nx <- max(na.omit(d01$drive))\ny  <- max(na.omit(d01$drive))\nz <- 50\nfor(n in seq(-x,x, length.out = z)){ # loop through values of x\n  if(n==-x) w <- data.frame(x,y) # create throw away dataframe\n  a <- data.frame(rep(n, each = length(seq(-y,y, length.out = z))), seq(-y,y, length.out = z))  # create values of y for each x\n  if(n==-x) w <- a \n  w <- rbind(w,a)\n  if(n==max(seq(-x,x, length.out = z))) w <- w[-c(seq(-y,y, length.out = z)),] # get rid of initialization rows\n}\n\nt1 <- scale(apply(w,2, f)) # apply regression function to data grid and scale values\nw <- cbind(w, t1) # Bind grid and end points\nnames(w) <- c(\"X\", \"Y\", \"VX\", \"VY\") #rename vectors in dataframe\n#w <- as.data.frame(scale(w))\np <- ggplot(w, aes(x = X, y = Y)) # create ggplot2 object\nq <- p + geom_segment(aes(xend = X + VX, yend = Y + VY), arrow = arrow(length = unit(0.1,\"cm\"), type= \"open\"), col=\"steelblue\")\n\nq\n  \n  \n  \n  ",
+    "created" : 1397243590432.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "187675486",
+    "id" : "30B90E6C",
+    "lastKnownWriteTime" : 1397243725,
+    "path" : "C:/Dropbox/school/Working Papers/COYDA/Code/testing.R",
+    "project_path" : "testing.R",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}
